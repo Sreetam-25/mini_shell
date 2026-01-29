@@ -56,9 +56,9 @@ int tokenize(char *line, char *argv[], int max_args)
             argv[0] = NULL;
             return -1;
         }
-        if (*p != '\0') 
+        if (*p != '\0')
         {
-            p++; 
+            p++;
         }
         *out = '\0';
 
@@ -77,6 +77,10 @@ int main(void)
 
     while (1)
     {
+        int status;
+        while (waitpid(-1, &status, WNOHANG) > 0)
+        {
+        }
         printf("$ ");
         fflush(stdout);
 
@@ -89,6 +93,7 @@ int main(void)
             break;
         }
         line[strcspn(line, "\r\n")] = '\0';
+        int bg = 0;
         char *argv[64];
         int argc = tokenize(line, argv, 64);
         if (argc <= 0)
@@ -112,21 +117,27 @@ int main(void)
         {
             break;
         }
+        if (strcmp(argv[argc - 1], "&") == 0)
+        {
+            argv[argc - 1] = NULL;
+            bg = 1;
+        }
         pid_t pid = fork();
         if (pid < 0)
         {
             perror("fork");
             continue;
         }
+        // checking bg process
         if (pid == 0)
         {
             execvp(argv[0], argv);
             perror("execvp");
             exit(1);
         }
-        else
+        else if (!bg)
         {
-            wait(NULL);
+            waitpid(pid, NULL, 0);
         }
     }
 
