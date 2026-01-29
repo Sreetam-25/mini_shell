@@ -89,7 +89,6 @@ int main(void)
             break;
         }
         line[strcspn(line, "\r\n")] = '\0';
-        printf("DEBUG last char = %d\n", (unsigned char)line[strlen(line) - 1]);
         char *argv[64];
         int argc = tokenize(line, argv, 64);
         if (argc <= 0)
@@ -112,11 +111,6 @@ int main(void)
         if (strcmp(argv[0], "exit") == 0)
         {
             break;
-        }
-        // Inside main, just before pid_t pid = fork();
-        for (int i = 0; argv[i] != NULL; i++)
-        {
-            printf("DEBUG argv[%d] = '%s'\n", i, argv[i]);
         }
         pid_t pid = fork();
         if (pid < 0)
