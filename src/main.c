@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <signal.h>
 int tokenize(char *line, char *argv[], int max_args)
 {
     int argc = 0;
@@ -71,6 +72,7 @@ int tokenize(char *line, char *argv[], int max_args)
 }
 int main(void)
 {
+    signal(SIGINT, SIG_IGN);
     char *line = NULL;
     size_t len = 0;
     ssize_t nread;
@@ -128,13 +130,14 @@ int main(void)
             perror("fork");
             continue;
         }
-        // checking bg process
         if (pid == 0)
         {
+            signal(SIGINT, SIG_DFL);
             execvp(argv[0], argv);
             perror("execvp");
             exit(1);
         }
+        // wait for the child process to stop if that child is fg
         else if (!bg)
         {
             waitpid(pid, NULL, 0);
