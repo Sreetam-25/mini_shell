@@ -1,3 +1,4 @@
-1.write notes on how we reap bg process
-2.why we are not using wait(NULL) for fg 
-3.how we are handling signals
+1. write notes on the structure
+2. pipelining
+3. explain redirection
+4. implement pipeline 
