@@ -5,71 +5,9 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <signal.h>
-int tokenize(char *line, char *argv[], int max_args)
-{
-    int argc = 0;
-    char *p = line;
-    while (*p != '\0')
-    {
-        // skip leading whitespaces
-        while (isspace((unsigned char)*p))
-        {
-            p++;
-        }
-        if (*p == '\0')
-        {
-            break;
-        }
-        if (argc >= max_args - 1)
-        {
-            break;
-        }
-        argv[argc++] = p;
-        char *out = p;    // we build the final argument here (in-place)
-        int in_quote = 0; // 0 means we can terminate at white spaces 1 means skip
-        char quote_char = '\0';
-        while (*p)
-        {
-            if (!in_quote && isspace((unsigned char)*p))
-            {
-                break;
-            }
-            if (!in_quote && (*p == '"' || *p == '\''))
-            {
-                in_quote = 1;
-                quote_char = *p;
-                p++; // skip opening quote
-                continue;
-            }
-            if (in_quote && *p == quote_char)
-            {
-                in_quote = 0;
-                quote_char = '\0';
-                p++; // skip closing quote
-                continue;
-            }
-            *out++ = *p++;
-        }
-
-        if (in_quote)
-        {
-            fprintf(stderr, "syntax error: missing closing quote\n");
-            argv[0] = NULL;
-            return -1;
-        }
-        if (*p != '\0')
-        {
-            p++;
-        }
-        *out = '\0';
-
-        // move p past whitespace (if any)
-        while (isspace((unsigned char)*p))
-            p++;
-    }
-    argv[argc] = NULL;
-    return argc;
-}
+#include "tokenizer.h"
+#include "parser.h"
+#include "executer.h"
 int main(void)
 {
     signal(SIGINT, SIG_IGN);
@@ -95,52 +33,38 @@ int main(void)
             break;
         }
         line[strcspn(line, "\r\n")] = '\0';
-        int bg = 0;
-        char *argv[64];
-        int argc = tokenize(line, argv, 64);
-        if (argc <= 0)
-            continue;
+        char *tokens[64];
+        int n_tokens = tokenize(line, tokens, 64);
 
-        if (strcmp(argv[0], "cd") == 0)
+        if (n_tokens < 0)
+            continue; // Syntax error in tokenizer
+        if (n_tokens == 0)
+            continue; // Empty line
+        // 2. Parse (Organize tokens into Command struct)
+        Command cmd;
+        if (parser(tokens, n_tokens, &cmd) ==0)
         {
-            char *path = argv[1] ? argv[1] : getenv("HOME");
+            // 3. Check Builtins
+            int status = handle_builtin(&cmd);
 
-            if (path == NULL)
-            {
-                fprintf(stderr, "cd: HOME not set\n");
+            if (status == -1)
+            { // User typed "exit"
+                for (int i = 0; i < n_tokens; i++)
+                    free(tokens[i]);
+                break;
             }
-            else if (chdir(path) != 0)
+
+            // 4. Execute External Command (if not builtin)
+            if (status == 0)
             {
-                perror("cd");
+                execute_command(&cmd);
             }
-            continue;
         }
-        if (strcmp(argv[0], "exit") == 0)
+
+        // 5. Cleanup (Free tokens)
+        for (int i = 0; i < n_tokens; i++)
         {
-            break;
-        }
-        if (strcmp(argv[argc - 1], "&") == 0)
-        {
-            argv[argc - 1] = NULL;
-            bg = 1;
-        }
-        pid_t pid = fork();
-        if (pid < 0)
-        {
-            perror("fork");
-            continue;
-        }
-        if (pid == 0)
-        {
-            signal(SIGINT, SIG_DFL);
-            execvp(argv[0], argv);
-            perror("execvp");
-            exit(1);
-        }
-        // wait for the child process to stop if that child is fg
-        else if (!bg)
-        {
-            waitpid(pid, NULL, 0);
+            free(tokens[i]);
         }
     }
 
