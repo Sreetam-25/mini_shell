@@ -12,7 +12,7 @@ typedef struct
 // Pipeline structure
 typedef struct
 {
-    //    array of commands
+    // array of commands
     Command commands[MAX_PIPE_SEGMENTS];
     int cmd_counts;
 } Pipeline;

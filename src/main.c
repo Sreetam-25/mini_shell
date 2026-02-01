@@ -43,12 +43,8 @@ int main(void)
         {
             if (p.cmd_counts > 0)
             {
-                // 3. Check for Builtin (Only valid for single commands)
-                // Note: "cd" inside a pipe (cd | ls) runs in a child, so we skip this check
                 if (p.cmd_counts == 1 && handle_builtin(&p.commands[0]))
                 {
-                    // Builtin handled (cd, exit)
-                    // If exit returned -1, we break
                     if (strcmp(p.commands[0].args[0], "exit") == 0)
                     {
                         for (int i = 0; i < n_tokens; i++)
@@ -58,13 +54,11 @@ int main(void)
                 }
                 else
                 {
-                    // 4. Execute (Handles Single Commands AND Pipelines)
                     execute_pipeline(&p);
                 }
             }
         }
 
-        // 5. Cleanup
         for (int i = 0; i < n_tokens; i++)
             free(tokens[i]);
     }

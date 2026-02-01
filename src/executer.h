@@ -10,6 +10,8 @@
 #include <signal.h>
 #include <fcntl.h>
 #include "shell.h"
+// handle commands like cd,exit 
+// works only in parent
 int handle_builtin(Command *cmd);
 void execute_pipeline(Pipeline *p);
 #endif

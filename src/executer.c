@@ -19,7 +19,7 @@ int handle_builtin(Command *cmd)
         {
             perror("cd");
         }
-        return 1; // Handled
+        return 1; 
     }
     return 0; // Not a builtin
 }
@@ -91,7 +91,7 @@ void execute_pipeline(Pipeline *p)
             perror("execvp");
             exit(1);
         }
-        // PARENT
+        // --PARENT--
         if (prev_fd != STDIN_FILENO)
             close(prev_fd);
         if (!is_last)

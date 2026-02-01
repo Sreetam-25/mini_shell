@@ -44,7 +44,7 @@ static int parse_single_segment(char *tokens[], int st, int end, Command *cmd)
             }
         }
     }
-    cmd->args[arg_id] = NULL; // Null-terminate for execvp
+    cmd->args[arg_id] = NULL; // Null terminate for execvp
     return 0;
 }
 int parse_input(char *tokens[], int n_tokens, Pipeline *p)
@@ -57,7 +57,6 @@ int parse_input(char *tokens[], int n_tokens, Pipeline *p)
         if (strcmp(tokens[i], "|") == 0 || i == n_tokens - 1)
         {
             int end_idx = (strcmp(tokens[i], "|") == 0) ? i : i + 1;
-
             if (p->cmd_counts < MAX_PIPE_SEGMENTS)
             {
                 Command *current = &p->commands[p->cmd_counts];
