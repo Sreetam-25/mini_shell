@@ -1,4 +1,2 @@
-1. write notes on the structure
-2. pipelining
-3. explain redirection
-4. implement pipeline 
+1. Implement job control
+2. Implement signal handling
