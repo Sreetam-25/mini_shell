@@ -1,1 +1,27 @@
+# Build output / binaries
 msh
+*.o
+*.out
+*.a
+*.so
+*.exe
+
+# Debug / crash dumps
+core
+core.*
+vgcore.*
+
+# Logs / temp files
+*.log
+*.tmp
+
+# Editor / OS files
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Optional build folders
+build/
+bin/
