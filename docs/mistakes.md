@@ -40,7 +40,7 @@ Initially, tokenization was implemented by splitting the input string **in-place
 
 This approach failed when operators like `>`, `<`, `|` were used **without spaces**.
 
-✅ Example:
+Example:
 
 ```sh
 cat>out.txt
@@ -62,7 +62,7 @@ What went wrong:
 * Later, at the end of the loop, the code inserted `'\0'` at `out`
 * Since `out` was pointing at the operator, the operator token got overwritten / terminated early
 
-✅ Result: the operator was effectively **lost ("eaten")**, and tokenization became incorrect.
+Result: the operator was effectively **lost ("eaten")**, and tokenization became incorrect.
 
 ---
 
