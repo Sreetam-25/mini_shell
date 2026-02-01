@@ -1,4 +1,4 @@
-#include "executer.h"
+#include "executor.h"
 int handle_builtin(Command *cmd)
 {
     if (cmd->args[0] == NULL)

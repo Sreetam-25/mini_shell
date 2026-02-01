@@ -7,7 +7,7 @@
 #include <signal.h>
 #include "tokenizer.h"
 #include "parser.h"
-#include "executer.h"
+#include "executor.h"
 int main(void)
 {
     signal(SIGINT, SIG_IGN);

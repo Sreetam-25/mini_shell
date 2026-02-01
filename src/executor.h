@@ -1,5 +1,5 @@
-#ifndef EXECUTER_H
-#define EXECUTER_H
+#ifndef EXECUTOR_H
+#define EXECUTOR_H
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
