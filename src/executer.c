@@ -23,61 +23,83 @@ int handle_builtin(Command *cmd)
     }
     return 0; // Not a builtin
 }
-void execute_command(Command *cmd)
+void execute_pipeline(Pipeline *p)
 {
-    if (cmd->args[0] == NULL)
-        return;
-    pid_t pid = fork();
-    if (pid < 0)
+    int prev_fd = STDIN_FILENO;
+    int fd[2];
+    for (int i = 0; i < p->cmd_counts; i++)
     {
-        perror("fork");
-        return;
-    }
-
-    if (pid == 0)
-    {
-        // --- CHILD PROCESS ---
-
-        // 1. Handle Input Redirection
-        if (cmd->redir_in)
+        Command *cmd = &p->commands[i];
+        int is_last = (i == p->cmd_counts - 1);
+        if (!is_last)
         {
-            int fd = open(cmd->redir_in, O_RDONLY);
-            if (fd < 0)
+            if (pipe(fd) == -1)
             {
-                perror("Error opening input file");
+                perror("pipe");
                 exit(1);
             }
-            dup2(fd, STDIN_FILENO);
-            close(fd);
         }
-
-        // 2. Handle Output Redirection
-        if (cmd->redir_out)
+        pid_t pid = fork();
+        if (pid == 0)
         {
-            int flags = O_WRONLY | O_CREAT;
-            if (cmd->append_mode)
-                flags |= O_APPEND;
-            else
-                flags |= O_TRUNC;
-
-            int fd = open(cmd->redir_out, flags, 0644);
-            if (fd < 0)
+            if (cmd->redir_in)
             {
-                perror("Error opening output file");
-                exit(1);
+                int f = open(cmd->redir_in, O_RDONLY);
+                if (f < 0)
+                {
+                    perror("input");
+                    exit(1);
+                }
+                dup2(f, STDIN_FILENO);
+                close(f);
+                // redirin has more priority than prev_fd
+                if (prev_fd != STDIN_FILENO)
+                    close(prev_fd);
             }
-            dup2(fd, STDOUT_FILENO);
-            close(fd);
-        }
+            else if (prev_fd != STDIN_FILENO)
+            {
+                // read from pipe buffer
+                dup2(prev_fd, STDIN_FILENO);
+                close(prev_fd);
+            }
 
-        // 3. Execute
-        execvp(cmd->args[0], cmd->args);
-        perror("execvp"); // Error if we return
-        exit(1);
+            if (cmd->redir_out)
+            {
+                int flags = O_WRONLY | O_CREAT | (cmd->append_mode ? O_APPEND : O_TRUNC);
+                int f = open(cmd->redir_out, flags, 0644);
+                if (f < 0)
+                {
+                    perror("output");
+                    exit(1);
+                }
+                dup2(f, STDOUT_FILENO);
+                close(f);
+                if (!is_last)
+                {
+                    close(fd[1]);
+                    close(fd[0]);
+                }
+            }
+            else if (!is_last)
+            {
+                // write into the pipe buffer
+                dup2(fd[1], STDOUT_FILENO);
+                close(fd[1]);
+                close(fd[0]);
+            }
+            execvp(cmd->args[0], cmd->args);
+            perror("execvp");
+            exit(1);
+        }
+        // PARENT
+        if (prev_fd != STDIN_FILENO)
+            close(prev_fd);
+        if (!is_last)
+        {
+            prev_fd = fd[0];
+            close(fd[1]);
+        }
     }
-    else
-    {
-        // --- PARENT PROCESS ---
-        waitpid(pid, NULL, 0);
-    }
+    while (wait(NULL) > 0)
+        ;
 }

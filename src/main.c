@@ -36,38 +36,38 @@ int main(void)
         char *tokens[64];
         int n_tokens = tokenize(line, tokens, 64);
 
-        if (n_tokens < 0)
-            continue; // Syntax error in tokenizer
-        if (n_tokens == 0)
-            continue; // Empty line
-        // 2. Parse (Organize tokens into Command struct)
-        Command cmd;
-        if (parser(tokens, n_tokens, &cmd) ==0)
+        if (n_tokens <= 0)
+            continue;
+        Pipeline p;
+        if (parse_input(tokens, n_tokens, &p) == 0)
         {
-            // 3. Check Builtins
-            int status = handle_builtin(&cmd);
-
-            if (status == -1)
-            { // User typed "exit"
-                for (int i = 0; i < n_tokens; i++)
-                    free(tokens[i]);
-                break;
-            }
-
-            // 4. Execute External Command (if not builtin)
-            if (status == 0)
+            if (p.cmd_counts > 0)
             {
-                execute_command(&cmd);
+                // 3. Check for Builtin (Only valid for single commands)
+                // Note: "cd" inside a pipe (cd | ls) runs in a child, so we skip this check
+                if (p.cmd_counts == 1 && handle_builtin(&p.commands[0]))
+                {
+                    // Builtin handled (cd, exit)
+                    // If exit returned -1, we break
+                    if (strcmp(p.commands[0].args[0], "exit") == 0)
+                    {
+                        for (int i = 0; i < n_tokens; i++)
+                            free(tokens[i]);
+                        break;
+                    }
+                }
+                else
+                {
+                    // 4. Execute (Handles Single Commands AND Pipelines)
+                    execute_pipeline(&p);
+                }
             }
         }
 
-        // 5. Cleanup (Free tokens)
+        // 5. Cleanup
         for (int i = 0; i < n_tokens; i++)
-        {
             free(tokens[i]);
-        }
     }
-
     free(line);
     return 0;
 }

@@ -8,5 +8,5 @@
 #include <ctype.h>
 #include <signal.h>
 #include"shell.h"
-int parser(char *tokens[], int n_tokens, Command *cmd);
+int parse_input(char*tokens[],int n_tokens,Pipeline *p);
 #endif

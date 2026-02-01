@@ -11,5 +11,5 @@
 #include <fcntl.h>
 #include "shell.h"
 int handle_builtin(Command *cmd);
-void execute_command(Command* cmd);
+void execute_pipeline(Pipeline *p);
 #endif
