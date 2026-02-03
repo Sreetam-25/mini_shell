@@ -50,6 +50,14 @@ static int parse_single_segment(char *tokens[], int st, int end, Command *cmd)
 int parse_input(char *tokens[], int n_tokens, Pipeline *p)
 {
     p->cmd_counts = 0;
+    p->background = 0;
+    if (n_tokens > 0 && strcmp(tokens[n_tokens - 1], "&") == 0)
+    {
+        p->background = 1;
+        n_tokens--; //  Reduce count so the loop ignores the "&" token
+                    // We don't want to pass "&" to execvp!
+    }
+
     int st_id = 0;
     // build single command
     for (int i = 0; i < n_tokens; i++)

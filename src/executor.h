@@ -14,4 +14,5 @@
 // works only in parent
 int handle_builtin(Command *cmd);
 void execute_pipeline(Pipeline *p);
+void build_cmd_string(Pipeline *p, char *buffer);
 #endif
